@@ -8,13 +8,14 @@ from orgs import orgs
 # Loop through networks in orgs
 # check each switch in the network
 # report a list of every switch that is configured for DHCP
-
-def switchCheck(orgID):
-    response = ""
-    headers = {
+headers = {
     "Authorization" : f"Bearer {prodKey}", # put prod or dev key here
     "Accept": "application/json"
     }
+
+
+def switchCheck(orgID, headers):
+    response = ""
     orgUrl = "https://api.meraki.com/api/v1/organizations"
     netUrl= f"{orgUrl}/{orgID['id']}/networks"
     netResponse = requests.get(headers=headers, url=netUrl) #grabs networks in organization
@@ -38,7 +39,7 @@ def switchCheck(orgID):
 def run_all_checks(org_list, output_filename="switch_check_output.txt", max_workers=5):
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(switchCheck, org): org for org in org_list}
+        futures = {executor.submit(switchCheck, org, headers): org for org in org_list}
         for future in as_completed(futures):
             org = futures[future]
             try:

@@ -7,7 +7,8 @@ wheels/
 *.egg-info
 secret.py
 orgs.py
+*output.txt
 
 # Virtual environments
 .venv
-*output.txt
+

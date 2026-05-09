@@ -9,13 +9,14 @@ from orgs import orgs
 # 2.Does it match switch settings MGMT vlan? Done
 # 3.Does the switch settings have the core switch set as the root? Done
 # 4.Are the switches staticly assigned to MGMT vlan? Done
-
-def mgmtCheck(orgID):
-    response = f"{orgID["name"]}\n\n"
-    headers = {
+headers = {
     "Authorization" : f"Bearer {prodKey}", # put prod or dev key here
     "Accept": "application/json"
     }
+
+
+def mgmtCheck(orgID,headers):
+    response = f"{orgID["name"]}\n\n"
     orgUrl = "https://api.meraki.com/api/v1/organizations"
     netUrl= f"{orgUrl}/{orgID['id']}/networks"
     netResponse = requests.get(headers=headers, url=netUrl) #grabs networks in organization
@@ -70,7 +71,7 @@ def mgmtCheck(orgID):
 def run_all_checks(org_list, output_filename="mgmt_check_output.txt", max_workers=5):
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(mgmtCheck, org): org for org in org_list}
+        futures = {executor.submit(mgmtCheck, org, headers): org for org in org_list}
         for future in as_completed(futures):
             org = futures[future]
             try:
@@ -87,4 +88,4 @@ def run_all_checks(org_list, output_filename="mgmt_check_output.txt", max_worker
 
 
 if __name__ == "__main__":
-    run_all_checks(orgs)
+    run_all_checks(orgs[:4])

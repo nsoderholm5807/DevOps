@@ -26,15 +26,7 @@ MERAKI_PROD_KEY=your_prod_api_key
 - `MERAKI_ENV` is optional and can be set to `dev` or `prod`.
 - `meraki/secret.py` is configured to load `.env` first, then `settings.env`.
 
-For security, do not commit these files to Git. Add the following to `.gitignore`:
 
-```gitignore
-/meraki/.env
-/meraki/settings.env
-/meraki/secret.py
-```
-
-It is also a good idea to commit a template file like `meraki/.env.example` instead of real secrets.
 
 ### 2. Generate Organizations List
 

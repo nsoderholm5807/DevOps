@@ -5,9 +5,9 @@ build/
 dist/
 wheels/
 *.egg-info
-secret.py
 orgs.py
 *output.txt
+settings.env
 
 # Virtual environments
 .venv

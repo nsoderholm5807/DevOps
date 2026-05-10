@@ -16,6 +16,7 @@ headers = {
 
 def switchCheck(orgID, headers):
     response = ""
+    orgCheck = False
     orgUrl = "https://api.meraki.com/api/v1/organizations"
     netUrl= f"{orgUrl}/{orgID['id']}/networks"
     netResponse = requests.get(headers=headers, url=netUrl) #grabs networks in organization
@@ -26,17 +27,24 @@ def switchCheck(orgID, headers):
     netResponse = netResponse.json()
     response += f"ORG: '{orgID['name']}'\n"
     for network in netResponse:
-        response += f"Network: '{network['name']}'\n"
+        dhcpCheck = False
+        baseResponse = f"  Network: '{network['name']}'\n"
         for switch in switchDeviceResponse:
             if network['id'] == switch['networkId']:
                 getDeviceConfig = f"https://api.meraki.com/api/v1/devices/{switch['serial']}/managementInterface"
                 switchConfig = requests.get(headers=headers, url=getDeviceConfig).json()
                 if not switchConfig['wan1']['usingStaticIp']:
-                    response += f"    Switch name: '{switch['name']}' with Serial: '{switch['serial']}' is configured DHCP\n"
-    return response
+                    baseResponse += f"    Switch name: '{switch['name']}' with Serial: '{switch['serial']}' is configured DHCP\n"
+                    orgCheck = True
+                    dhcpCheck = True
+        if dhcpCheck == True:
+            response += baseResponse
+    if orgCheck:
+        return response
+    else: return ""
 
 
-def run_all_checks(org_list, output_filename="switch_check_output.txt", max_workers=5):
+def run_all_checks(org_list, output_filename="switch_check_output.txt", max_workers=20):
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(switchCheck, org, headers): org for org in org_list}
@@ -47,7 +55,7 @@ def run_all_checks(org_list, output_filename="switch_check_output.txt", max_work
             except Exception as exc:
                 results.append(f"Error checking {org['name']} ({org['id']}): {exc}\n")
 
-    output = "\n".join(results)
+    output = "\n".join(result for result in results if result)
     with open(output_filename, "w", encoding="utf-8") as out_file:
         out_file.write(output)
 

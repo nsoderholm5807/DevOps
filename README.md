@@ -13,16 +13,28 @@ This repository contains Python scripts for managing and auditing Meraki network
 
 ### 1. API Key Configuration
 
-Create a file named `secret.py` in the `meraki/` folder with your Meraki API keys:
+This project loads Meraki API keys from environment variables via `meraki/secret.py`.
+Create a local file named `meraki/.env` or `meraki/settings.env` with your values:
 
-```python
-# meraki/secret.py
-devKey = "your_development_api_key_here"
-prodKey = "your_production_api_key_here"
+```env
+MERAKI_ENV=prod
+MERAKI_DEV_KEY=your_dev_api_key
+MERAKI_PROD_KEY=your_prod_api_key
 ```
 
-- Replace `your_development_api_key_here` and `your_production_api_key_here` with your actual Meraki API keys.
-- The scripts use `prodKey` by default for production operations.
+- Replace `your_dev_api_key` and `your_prod_api_key` with your actual Meraki API keys.
+- `MERAKI_ENV` is optional and can be set to `dev` or `prod`.
+- `meraki/secret.py` is configured to load `.env` first, then `settings.env`.
+
+For security, do not commit these files to Git. Add the following to `.gitignore`:
+
+```gitignore
+/meraki/.env
+/meraki/settings.env
+/meraki/secret.py
+```
+
+It is also a good idea to commit a template file like `meraki/.env.example` instead of real secrets.
 
 ### 2. Generate Organizations List
 
@@ -85,10 +97,10 @@ Run this periodically to refresh the organizations list if new organizations are
 - Ensure your API key has the necessary permissions for the operations you're performing.
 - Scripts use threading for concurrent API calls to improve performance.
 - Output files are overwritten on each run; backup important results if needed.
-- For production use, consider using the `prodKey` in `secret.py`.
+- For production use, ensure `MERAKI_PROD_KEY` is set and `MERAKI_ENV=prod`.
 
 ## Troubleshooting
 
 - If you encounter API rate limits, the scripts include basic error handling and retries.
 - Check the console output for any error messages or API responses.
-- Ensure `secret.py` is correctly formatted and contains valid API keys.
+- Ensure `meraki/.env`, `meraki/settings.env`, or environment variables contain valid API keys.

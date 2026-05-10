@@ -64,4 +64,4 @@ def run_all_checks(org_list, output_filename="switch_check_output.txt", max_work
 
 
 if __name__ == "__main__":
-    run_all_checks(orgs)
+    run_all_checks(orgs[:4])

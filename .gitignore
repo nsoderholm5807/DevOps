@@ -5,7 +5,8 @@ build/
 dist/
 wheels/
 *.egg-info
-orgs.py
+*Orgs.py
+*orgs.py
 *output.txt
 settings.env
 

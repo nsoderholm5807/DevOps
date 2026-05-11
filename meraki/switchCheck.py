@@ -1,5 +1,5 @@
 import requests
-from secret import devKey, prodKey
+from secret import devKey, prodKey, env
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from rich import print
 from orgs import orgs
@@ -8,8 +8,9 @@ from orgs import orgs
 # Loop through networks in orgs
 # check each switch in the network
 # report a list of every switch that is configured for DHCP
+
 headers = {
-    "Authorization" : f"Bearer {prodKey}", # put prod or dev key here
+    "Authorization" : f"Bearer {prodKey if env == "prod" else devKey}", # put prod or dev key here
     "Accept": "application/json"
     }
 

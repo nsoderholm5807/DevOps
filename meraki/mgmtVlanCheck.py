@@ -1,5 +1,5 @@
 import requests
-from secret import devKey, prodKey
+from secret import devKey, prodKey, env
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from rich import print
 from orgs import orgs
@@ -9,8 +9,9 @@ from orgs import orgs
 # 2.Does it match switch settings MGMT vlan? Done
 # 3.Does the switch settings have the core switch set as the root? Done
 # 4.Are the switches staticly assigned to MGMT vlan? Done
+
 headers = {
-    "Authorization" : f"Bearer {prodKey}", # put prod or dev key here
+    "Authorization" : f"Bearer {prodKey if env == "prod" else devKey}", # put prod or dev key here
     "Accept": "application/json"
     }
 

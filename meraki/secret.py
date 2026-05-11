@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 base_dir = Path(__file__).resolve().parent
-load_dotenv(base_dir / ".env")
+# load_dotenv(base_dir / ".env")
 load_dotenv(base_dir / "settings.env")
 
 env = os.getenv("MERAKI_ENV")

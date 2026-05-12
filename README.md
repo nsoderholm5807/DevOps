@@ -4,17 +4,17 @@ This repository contains Python scripts for managing and auditing Meraki network
 
 ## Prerequisites
 
-- Python 3.7 or higher
-- `requests` library (install via `pip install requests`)
-- `rich` library (install via `pip install rich`)
+- Python 3.13 or higher
+- `requests` library
+- `rich` library
 - A valid Meraki API key with appropriate permissions
 
 ## Setup
 
 ### 1. API Key Configuration
 
-This project loads Meraki API keys from environment variables via `meraki/secret.py`.
-Create a local file named `meraki/.env` or `meraki/settings.env` with your values:
+This project loads Meraki API keys from environment variables via `meraki/settings/secret.py`.
+Create a local file named `meraki/settings.env` with your values:
 
 ```env
 MERAKI_ENV=prod
@@ -24,75 +24,75 @@ MERAKI_PROD_KEY=your_prod_api_key
 
 - Replace `your_dev_api_key` and `your_prod_api_key` with your actual Meraki API keys.
 - `MERAKI_ENV` is optional and can be set to `dev` or `prod`.
-- `meraki/secret.py` is configured to load `.env` first, then `settings.env`.
+- `meraki/settings/secret.py` loads `meraki/settings.env`.
 
+### 2. Current File Structure
 
+Key files and folders:
 
-### 2. Generate Organizations List
+- `meraki/`
+  - `monitoring/`
+    - `mgmtVlanCheck.py`
+    - `switchCheck.py`
+  - `settings/`
+    - `generateOrg.py`
+    - `secret.py`
+    - `settings.env`
+  - `results/`
+- `pyproject.toml`
+- `README.md`
 
-Run the `generateOrg.py` script to fetch and generate the list of organizations:
+### 3. Generate Organizations List
+
+Run the generator from the project root:
 
 ```bash
-python meraki/generateOrg.py
+cd /path/to/project-root
+.venv/bin/python -m meraki.settings.generateOrg
 ```
 
-This will create or update `meraki/orgs.py` with the current list of organizations accessible via your API key.
+This creates or updates `meraki/orgs.py` with the current list of organizations accessible via your API key.
 
 ## Usage
 
-After setup, you can run the various scripts to perform audits and checks on your Meraki networks.
+After setup, run the available audit scripts from the repository root.
 
 ### Available Scripts
 
-- **`generateOrg.py`**: Fetches and generates the organizations list in `orgs.py`.
-- **`switchCheck.py`**: Checks switches configured for DHCP in each organization and network.
-- **`mgmtVlanCheck.py`**: Performs management VLAN checks confirming if switch networks are probably configured with management VLANs and outputting any issues if discovered.
+- `meraki/settings/generateOrg.py`: fetches organizations and writes `meraki/orgs.py`
+- `meraki/monitoring/switchCheck.py`: checks switches configured for DHCP
+- `meraki/monitoring/mgmtVlanCheck.py`: audits management VLAN configuration for Meraki networks
 
 ### Running Scripts
 
-Most scripts can be run directly:
+From the repository root, run scripts as modules:
 
 ```bash
-python meraki/switchCheck.py
+cd /path/to/project-root
+.venv/bin/python -m meraki.monitoring.switchCheck
+.venv/bin/python -m meraki.monitoring.mgmtVlanCheck
 ```
 
-Output files are typically generated in the root directory (e.g., `switch_check_output.txt`, `mgmt_check_output.txt`).
-
-### Main Entry Point
-
-You can also use `main.py` as the primary entry point if configured:
+Or run the organization generator directly:
 
 ```bash
-python main.py
+cd /path/to/project-root
+.venv/bin/python -m meraki.settings.generateOrg
 ```
 
-## Examples
+### Output Files
 
-### Checking Switches for DHCP Configuration
-
-```bash
-python meraki/switchCheck.py
-```
-
-This will output results to `switch_check_output.txt`, listing organizations and networks with DHCP-configured switches.
-
-### Generating Updated Organizations
-
-```bash
-python meraki/generateOrg.py
-```
-
-Run this periodically to refresh the organizations list if new organizations are added or removed.
+- `meraki/results/mgmt_check_output.txt` by default for `mgmtVlanCheck.py`
+- `switch_check_output.txt` by default for `switchCheck.py`
 
 ## Notes
 
-- Ensure your API key has the necessary permissions for the operations you're performing.
-- Scripts use threading for concurrent API calls to improve performance.
-- Output files are overwritten on each run; backup important results if needed.
-- For production use, ensure `MERAKI_PROD_KEY` is set and `MERAKI_ENV=prod`.
+- Scripts should be run from the repository root so package imports resolve cleanly.
+- Output files are overwritten on each run.
+- `meraki/settings/secret.py` must load valid API keys before scripts can run.
 
 ## Troubleshooting
 
-- If you encounter API rate limits, the scripts include basic error handling and retries.
-- Check the console output for any error messages or API responses.
-- Ensure `meraki/.env`, `meraki/settings.env`, or environment variables contain valid API keys.
+- If you see `ModuleNotFoundError: No module named 'meraki'`, run from the project root and use `python -m ...`.
+- Validate `meraki/settings.env` values and confirm `MERAKI_DEV_KEY` / `MERAKI_PROD_KEY` are set.
+- If API calls fail, check the API key permissions and rate-limit responses.

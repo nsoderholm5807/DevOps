@@ -1,8 +1,15 @@
+from pathlib import Path
+import sys
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import requests
-from secret import devKey, prodKey, env
+from meraki.settings.secret import devKey, prodKey, env
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from rich import print
-from orgs import orgs
+from meraki.orgs import orgs
 
 # Relevant checks: 
 # 1.Does MGMT vlan exist? Done 
@@ -11,13 +18,13 @@ from orgs import orgs
 # 4.Are the switches staticly assigned to MGMT vlan? Done
 
 headers = {
-    "Authorization" : f"Bearer {prodKey if env == "prod" else devKey}", # put prod or dev key here
+    "Authorization": f"Bearer {prodKey if env == 'prod' else devKey}",
     "Accept": "application/json"
-    }
+}
 
 
 def mgmtCheck(orgID,headers):
-    response = f"{orgID["name"]}\n\n"
+    response = f"{orgID['name']}\n\n"
     orgUrl = "https://api.meraki.com/api/v1/organizations"
     netUrl= f"{orgUrl}/{orgID['id']}/networks"
     netResponse = requests.get(headers=headers, url=netUrl) #grabs networks in organization
@@ -29,7 +36,7 @@ def mgmtCheck(orgID,headers):
         if all(check in network['productTypes'] for check in ('appliance', 'switch')): #validates network as MX and MS devices for further checks
             switchDeviceUrl = f"{orgUrl}/{orgID['id']}/devices?productTypes[]=switch"
             switchDeviceResponse = requests.get(headers=headers, url=switchDeviceUrl).json() #grabs switch settings for further checks
-            getVlanUrl = f"https://api.meraki.com/api/v1/networks/{network["id"]}/appliance/vlans"
+            getVlanUrl = f"https://api.meraki.com/api/v1/networks/{network['id']}/appliance/vlans"
             vlanResponse = requests.get(headers=headers, url=getVlanUrl) #grabs vlan settings on MX
             if vlanResponse.status_code != 200:
                 response += f"  VLAN Error for network {network['name']}: {vlanResponse.status_code} - {vlanResponse.text}\n\n"
@@ -69,7 +76,7 @@ def mgmtCheck(orgID,headers):
     return response
 
 
-def run_all_checks(org_list, output_filename="mgmt_check_output.txt", max_workers=5):
+def run_all_checks(org_list, output_filename="./meraki/results/mgmt_check_output.txt", max_workers=5):
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(mgmtCheck, org, headers): org for org in org_list}

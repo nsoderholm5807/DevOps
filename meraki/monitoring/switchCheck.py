@@ -1,8 +1,15 @@
+from pathlib import Path
+import sys
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import requests
-from secret import devKey, prodKey, env
+from meraki.settings.secret import devKey, prodKey, env
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from rich import print
-from orgs import orgs
+from meraki.orgs import orgs
 
 # Relevant checks:
 # Loop through networks in orgs
@@ -10,9 +17,9 @@ from orgs import orgs
 # report a list of every switch that is configured for DHCP
 
 headers = {
-    "Authorization" : f"Bearer {prodKey if env == "prod" else devKey}", # put prod or dev key here
+    "Authorization": f"Bearer {prodKey if env == 'prod' else devKey}",
     "Accept": "application/json"
-    }
+}
 
 
 def switchCheck(orgID, headers):

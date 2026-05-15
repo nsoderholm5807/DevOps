@@ -1,10 +1,5 @@
 from pathlib import Path
 import sys
-
-ROOT_DIR = Path(__file__).resolve().parents[2]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
-
 import requests
 from meraki.settings.secret import devKey, prodKey, env
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -16,6 +11,10 @@ from meraki.orgs import orgs
 # 2.Does it match switch settings MGMT vlan? Done
 # 3.Does the switch settings have the core switch set as the root? Done
 # 4.Are the switches staticly assigned to MGMT vlan? Done
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 headers = {
     "Authorization": f"Bearer {prodKey if env == 'prod' else devKey}",

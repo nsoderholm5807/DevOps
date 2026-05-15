@@ -5,6 +5,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+import json
 import requests
 from meraki.settings.secret import devKey, prodKey, env
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -28,39 +29,32 @@ def lspAudit(orgID, headers):
     checkDate = datetime.fromisoformat('2025-08-01T00:00:00Z')
     remediate = False
     response = f"Organization: {orgID['name']}\n"
-    netUrl= f"{orgUrl}/{orgID['id']}/networks"
-    netResponse = requests.get(headers=headers, url=netUrl) #grabs networks in organization
-    if netResponse.status_code != 200:
-        response += f"Error: {netResponse.status_code} - {netResponse.text}\n"
+    orgUrl= f"{orgUrl}/{orgID['id']}/configurationChanges"
+    orgResponse = requests.get(headers=headers, url=orgUrl) #grabs networks in organization
+    if orgResponse.status_code != 200:
+        response += f"Error: {orgResponse.status_code} - {orgResponse.text}\n"
         return response
-    netResponse = netResponse.json()
-    netResponse.sort(key=lambda item: item['id'])
-    invURL = f"{orgUrl}/{orgID['id']}/inventory/devices"
-    invResponse = requests.get(headers=headers, url=invURL).json()
-    invResponse.sort(key=lambda item: (item.get('networkId') is None, item.get('networkId')))
-    for net in netResponse:
-        netRem = False
-        netResp = ""
-        for device in invResponse:
-            if net['id'] == device['networkId']:
-                if datetime.fromisoformat(device['claimedAt'])<checkDate:
-                    break
-                else:
-                    settingURL = f"https://api.meraki.com/api/v1/networks/{net['id']}/settings"
-                    setResponse = requests.get(headers=headers,url=settingURL).json()
-                    passValue = setResponse['localStatusPage']['authentication']['passwordSet']
-                    if not passValue and not netRem:
-                        netResp = f"Network: {net['name']} needs LSP password set and all inventory was added after {checkDate.strftime('%B %d, %Y')}\n"
-                        remediate = True
-                        netRem = True
-        if netRem == True:
-            response += netResp
+    orgResponse = orgResponse.json()
+    for entry in orgResponse:
+        if "Create network" in entry['label'] and datetime.fromisoformat(entry['ts'])>checkDate:
+            newValue = json.loads(entry['newValue'])
+            settingURL = f"https://api.meraki.com/api/v1/networks/{newValue['id']}/settings"
+            setResponse = requests.get(headers=headers, url=settingURL)
+            if setResponse.status_code == 200:
+                setResponse = setResponse.json()
+                passValue = setResponse['localStatusPage']['authentication']['passwordSet']
+                if not passValue:
+                    response += f"Network: {newValue['name']} needs LSP password set and network was created after {checkDate.strftime('%B %d, %Y')}\n"
+                    remediate = True
+            else:
+                continue
     response += "\n"
     if remediate == True:
         return response
     return ""
+            
 
-
+# print(lspAudit(orgs[33],headers=headers))
 def run_all_checks(org_list, output_filename="./meraki/results/lspAudit_check_output.txt", max_workers=10):
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
